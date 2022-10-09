@@ -1,0 +1,440 @@
+1. Upload hr_db dataset into HDFS
+   > In the already created shared folder in the local system, load the data and in VM
+    
+Check the version of Hadoop
+   $ hadoop version
+
+Check if Hadoop services are running
+   $ jps
+
+Start Hadoop services
+
+   $ cd /usr/local/hadoop-2.9.1/sbin
+
+   $ ./start-all.sh
+
+   $ cd
+
+   $ jps
+   $ chmod 777 Downloads/mountsf
+   $ sh Downloads/mountsf
+
+   > Load hr_db dataset into HDFS
+   $ hadoop fs -mkdir /user/hduser/hr_db
+   $ hadoop fs -put /home/hduser/Downloads/sharedfolder/hr_db/employees/part-00000.csv /user/hduser/hr_db
+
+   $ hadoop fs -cat /user/hduser/hr_db/part-00000.csv
+
+2. Solve the following use cases using Hive SQL or Spark RDD or Spark DF (Pick any one of these)
+   a. Retrieve last_name, first_name, salary, salary+300 as increment salary from employees table
+    
+    hive> CREATE DATABASE employees_demo_db ;
+    hive> SHOW DATABASES ;
+    hive> USE employees_demo_db ;
+    
+    hive> CREATE EXTERNAL TABLE employees(
+    >             first_name STRING,
+    >             last_name STRING,
+    >             email STRING,
+    >             phone_number INT,
+    >             hire_date INT,
+    >             job_id INT,
+    >             salary INT,
+    >             commission_pct FLOAT,
+    >             manager_id INT,
+    >             dapartment_id INT
+    >         )
+    >         ROW FORMAT DELIMITED
+    >         FIELDS TERMINATED BY ','
+    >         STORED AS TEXTFILE
+    >         LOCATION '/user/hduser/hr_db/' ;
+OK
+Time taken: 0.534 seconds
+
+    hive> SHOW TABLES ;
+    hive> DESCRIBE employees ;
+OK
+first_name          	string              	                    
+last_name           	string              	                    
+email               	string              	                    
+phone_number        	int                 	                    
+hire_date           	int                 	                    
+job_id              	int                 	                    
+salary              	int                 	                    
+commission_pct      	float               	                    
+manager_id          	int                 	                    
+dapartment_id       	int                 	                    
+Time taken: 0.518 seconds, Fetched: 10 row(s)
+   
+ hive> SELECT * FROM employees ;
+ 
+Solution:
+ hive> select last_name, first_name, salary, commission_pct from employees ;
+
+
+
+
+
+
+   b. Find out the ID's of departments in which employees are working
+   
+   hive> SHOW TABLES ;
+   hive> select distinct department_id from employees ;
+department_id
+0
+10
+20
+30
+40
+50
+60
+70
+80
+90
+100
+110
+     Time taken: 0.908 seconds, Fetched: 12 row(s) 
+
+   c. Retrieve last_name, job_id, department_id of employee having last name as Whalen 
+
+
+      hive> SELECT last_name, job_id, dapartment_id FROM employees WHERE last_name IN('Whalen');
+      last_name	job_id	department_id
+      Whalen	AD_ASST	10
+
+   d. Retrieve last name and salary of all employees who have salary greater than 5000 working in department 90
+      
+      hive> SELECT last_name, salary  FROM employees WHERE salary > 5000 AND department_id = 90 ;
+      last_name	salary
+	last_name	salary
+	King	24000.00
+	Kochhar	17000.00
+	De Haan	17000.00
+
+   e. Retrieve last_name, salary of all employees working as 'SA_REP','AD_PRES' earning above 5000, sort the data in ascending order of last name
+
+     hive> SELECT last_name, salary FROM employees WHERE job_id = ('SA_REP' OR 'AD_PRES') AND salary > 5000 ORDER BY salary ASC ;
+     last_name	salary
+	Mourgos	5800.00
+	Ernst	6000.00
+	Fay	6000.00
+	Kumar	6100.00
+	Banda	6200.00
+	Johnson	6200.00
+	Ande	6400.00
+	Mavris	6500.00
+	Vollman	6500.00
+	Lee	6800.00
+	Popp	6900.00
+	Tuvault	7000.00
+	Sewall	7000.00
+	Grant	7000.00
+	Marvins	7200.00
+	Bates	7300.00
+	Smith	7400.00
+	Doran	7500.00
+	Cambrault	7500.00
+	Sciarra	7700.00
+	Urman	7800.00
+	Kaufling	7900.00
+	Weiss	8000.00
+	Smith	8000.00
+	Olsen	8000.00
+	Fripp	8200.00
+	Chen	8200.00
+	Gietz	8300.00
+	Livingston	8400.00
+	Taylor	8600.00
+	Hutton	8800.00
+	Hall	9000.00
+	McEwen	9000.00
+	Faviet	9000.00
+	Hunold	9000.00
+	Sully	9500.00
+	Bernstein	9500.00
+	Greene	9500.00
+	Fox	9600.00
+	Baer	10000.00
+	King	10000.00
+	Bloom	10000.00
+	Tucker	10000.00
+	Vishney	10500.00
+	Zlotkey	10500.00
+	Cambrault	11000.00
+	Raphaely	11000.00
+	Abel	11000.00
+	Ozer	11500.00
+	Errazuriz	12000.00
+	Greenberg	12000.00
+	Higgins	12000.00
+	Hartstein	13000.00
+	Partners	13500.00
+	Russell	14000.00
+	De Haan	17000.00
+	Kochhar	17000.00
+	King	24000.00
+   f. Retrieve the last names of employees whose last but one character of the last name is e
+      
+ hive> SELECT last_name FROM employees WHERE last_name LIKE '__e%'
+ 	last_name
+	Abel
+	Baer
+	Chen
+	Everett
+	Feeney
+	Fleaur
+	Gee
+	Gietz
+	Greenberg
+	Greene
+	Lee
+	McEwen
+	Ozer
+
+   g. Retrieve the names of employees not having managers
+
+
+ hive> SELECT first_name, last_name FROM employees WHERE manager_id IS NOT NULL;
+      first_name	last_name
+	Steven	King
+	Neena	Kochhar
+	Lex	De Haan
+	Alexander	Hunold
+	Bruce	Ernst
+	David	Austin
+	Valli	Pataballa
+	Diana	Lorentz
+	Nancy	Greenberg
+	Daniel	Faviet
+	John	Chen
+	Ismael	Sciarra
+	Jose Manuel	Urman
+	Luis	Popp
+	Den	Raphaely
+	Alexander	Khoo
+	Shelli	Baida
+	Sigal	Tobias
+	Guy	Himuro
+	Karen	Colmenares
+	Matthew	Weiss
+	Adam	Fripp
+	Payam	Kaufling
+	Shanta	Vollman
+	Kevin	Mourgos
+	Julia	Nayer
+	Irene	Mikkilineni
+	James	Landry
+	Steven	Markle
+	Laura	Bissot
+	Mozhe	Atkinson
+	James	Marlow
+	TJ	Olson
+	Jason	Mallin
+	Michael	Rogers
+	Ki	Gee
+	Hazel	Philtanker
+	Renske	Ladwig
+	Stephen	Stiles
+	John	Seo
+	Joshua	Patel
+	Trenna	Rajs
+	Curtis	Davies
+	Randall	Matos
+	Peter	Vargas
+	John	Russell
+	Karen	Partners
+	Alberto	Errazuriz
+	Gerald	Cambrault
+	Eleni	Zlotkey
+	Peter	Tucker
+	David	Bernstein
+	Peter	Hall
+	Christopher	Olsen
+	Nanette	Cambrault
+	Oliver	Tuvault
+	Janette	King
+	Patrick	Sully
+	Allan	McEwen
+	Lindsey	Smith
+	Louise	Doran
+	Sarath	Sewall
+	Clara	Vishney
+	Danielle	Greene
+	Mattea	Marvins
+	David	Lee
+	Sundar	Ande
+	Amit	Banda
+	Lisa	Ozer
+	Harrison	Bloom
+	Tayler	Fox
+	William	Smith
+	Elizabeth	Bates
+	Sundita	Kumar
+	Ellen	Abel
+	Alyssa	Hutton
+	Jonathon	Taylor
+	Jack	Livingston
+	Kimberely	Grant
+	Charles	Johnson
+	Winston	Taylor
+	Jean	Fleaur
+	Martha	Sullivan
+	Girard	Geoni
+	Nandita	Sarchand
+	Alexis	Bull
+	Julia	Dellinger
+	Anthony	Cabrio
+	Kelly	Chung
+	Jennifer	Dilly
+	Timothy	Gates
+	Randall	Perkins
+	Sarah	Bell
+	Britney	Everett
+	Samuel	McCain
+	Vance	Jones
+	Alana	Walsh
+	Kevin	Feeney
+	Donald	OConnell
+	Douglas	Grant
+	Jennifer	Whalen
+	Michael	Hartstein
+	Pat	Fay
+	Susan	Mavris
+	Hermann	Baer
+	Shelley	Higgins
+	William	Gietz
+
+
+   h. Retrieve the employee name and the name of the department in which the employee is working
+
+    hive> SELECT fisrt_name, last_name FROM employees WHERE department_id IS NOT NULL;
+             first_name	last_name
+Steven	King
+Neena	Kochhar
+Lex	De Haan
+Alexander	Hunold
+Bruce	Ernst
+David	Austin
+Valli	Pataballa
+Diana	Lorentz
+Nancy	Greenberg
+Daniel	Faviet
+John	Chen
+Ismael	Sciarra
+Jose Manuel	Urman
+Luis	Popp
+Den	Raphaely
+Alexander	Khoo
+Shelli	Baida
+Sigal	Tobias
+Guy	Himuro
+Karen	Colmenares
+Matthew	Weiss
+Adam	Fripp
+Payam	Kaufling
+Shanta	Vollman
+Kevin	Mourgos
+Julia	Nayer
+Irene	Mikkilineni
+James	Landry
+Steven	Markle
+Laura	Bissot
+Mozhe	Atkinson
+James	Marlow
+TJ	Olson
+Jason	Mallin
+Michael	Rogers
+Ki	Gee
+Hazel	Philtanker
+Renske	Ladwig
+Stephen	Stiles
+John	Seo
+Joshua	Patel
+Trenna	Rajs
+Curtis	Davies
+Randall	Matos
+Peter	Vargas
+John	Russell
+Karen	Partners
+Alberto	Errazuriz
+Gerald	Cambrault
+Eleni	Zlotkey
+Peter	Tucker
+David	Bernstein
+Peter	Hall
+Christopher	Olsen
+Nanette	Cambrault
+Oliver	Tuvault
+Janette	King
+Patrick	Sully
+Allan	McEwen
+Lindsey	Smith
+Louise	Doran
+Sarath	Sewall
+Clara	Vishney
+Danielle	Greene
+Mattea	Marvins
+David	Lee
+Sundar	Ande
+Amit	Banda
+Lisa	Ozer
+Harrison	Bloom
+Tayler	Fox
+William	Smith
+Elizabeth	Bates
+Sundita	Kumar
+Ellen	Abel
+Alyssa	Hutton
+Jonathon	Taylor
+Jack	Livingston
+Kimberely	Grant
+Charles	Johnson
+Winston	Taylor
+Jean	Fleaur
+Martha	Sullivan
+Girard	Geoni
+Nandita	Sarchand
+Alexis	Bull
+Julia	Dellinger
+Anthony	Cabrio
+Kelly	Chung
+Jennifer	Dilly
+Timothy	Gates
+Randall	Perkins
+Sarah	Bell
+Britney	Everett
+Samuel	McCain
+Vance	Jones
+Alana	Walsh
+Kevin	Feeney
+Donald	OConnell
+Douglas	Grant
+Jennifer	Whalen
+Michael	Hartstein
+Pat	Fay
+Susan	Mavris
+Hermann	Baer
+Shelley	Higgins
+William	Gietz
+ 
+   i. List all the department ids having SIX employees
+     
+
+    hive> Select DepartmentName, Count(*) as EmployeeCount
+	from employees 
+	JOIN Departments 
+	on Employees.DepartmentID = Departments.DepartmentID
+	Group By DepartmentName
+
+DEPARTMENT_NAME	EmployeeCount
+Administration	1
+Marketing	2
+Purchasing	6
+Human Resources	1
+Shipping	45
+IT	5
+Public Relations	1
+Sales	34
+Executive	3
+Finance	6
+Accounting	2
